@@ -32,6 +32,21 @@ Access: http://localhost:5173
 
 ## API-exempel
 
+### Verifiera backend med cURL
+
+```bash
+# Check health
+curl -sS http://localhost:8002/health
+
+# Analyze text
+curl -sS -X POST http://localhost:8002/analyze \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Hej, jag vill förbättra min text",
+    "temperature": 0.7
+  }'
+```
+
 ### POST /analyze
 
 Request:
@@ -73,12 +88,27 @@ Response:
 }
 ```
 
+### Snabb test med cURL
+
+```bash
+# Generate based on selected suggestions
+curl -sS -X POST http://localhost:8002/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Original text here...",
+    "suggestions": ["Suggestion 1", "Suggestion 2"],
+    "selected_suggestions": [true, false],
+    "temperature": 0.7
+  }'
+```
+
 ## Miljövariabler
 
 Se `.env.example` för template. Krävs:
 - `DEEPSEEK_API_KEY` – Din DeepSeek API nyckel
-- `VITE_API_BASE_URL` – Backend URL (default: http://localhost:8002)
+- `VITE_API_BASE_URL` – Backend URL, måste vara `http://localhost:8002` för lokal utveckling
 - `BACKEND_PORT` – Backend port (default: 8002)
+- `CORS_ORIGINS` – CORS-tillåtna ursprung (default: http://localhost:5173)
 
 ## Test & CI
 
