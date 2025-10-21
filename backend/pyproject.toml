@@ -1,0 +1,24 @@
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+select = ["E","F","I","UP","B","SIM","PL"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+addopts = "-q --maxfail=1 --disable-warnings"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["backend/src"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_configs = true
+warn_unreachable = true
+ignore_missing_imports = false
+mypy_path = ["backend/src"]

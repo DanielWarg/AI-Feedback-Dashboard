@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+pydantic
+httpx
+python-dotenv
+pytest
+pytest-asyncio
+pytest-cov
+mypy
+ruff
+black
