@@ -3,16 +3,19 @@ import { useTextAnalyzer } from '@hooks/useTextAnalyzer'
 import type { AnalyzeResponse } from '@types/api'
 import { storageService } from '@services/storage'
 import { TemperatureControl } from './TemperatureControl'
+import { DEFAULT_TEMPERATURE, TEXT_MAX_LENGTH } from '@constants'
+import { formatApiError } from '@utils/errorFormatter'
 
 interface TextAnalyzerProps {
   onResultReceived?: (result: AnalyzeResponse) => void
+  onOriginalTextChange?: (text: string) => void
   onTemperatureChange?: (temp: number) => void
 }
 
-export function TextAnalyzer({ onResultReceived, onTemperatureChange }: TextAnalyzerProps) {
+export function TextAnalyzer({ onResultReceived, onOriginalTextChange, onTemperatureChange }: TextAnalyzerProps) {
   const { text, loading, error, setText, analyze, clearResult } = useTextAnalyzer()
-  const [temperature, setTemperature] = useState(0.7)
-  const maxChars = 5000
+  const [temperature, setTemperature] = useState(DEFAULT_TEMPERATURE)
+  const maxChars = TEXT_MAX_LENGTH
   const charCount = text.length
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -23,6 +26,7 @@ export function TextAnalyzer({ onResultReceived, onTemperatureChange }: TextAnal
   }
 
   const handleAnalyze = async () => {
+    onOriginalTextChange?.(text)
     const result = await analyze(text, temperature)
     if (result) {
       storageService.saveResult(text, result)

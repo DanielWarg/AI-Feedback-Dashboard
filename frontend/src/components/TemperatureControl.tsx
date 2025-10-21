@@ -1,3 +1,5 @@
+import { MIN_TEMPERATURE, MAX_TEMPERATURE, DEFAULT_TEMPERATURE } from '@constants'
+
 interface TemperatureControlProps {
   temperature: number
   onChange: (temp: number) => void
@@ -5,7 +7,7 @@ interface TemperatureControlProps {
 
 const presets = [
   { label: 'Conservative', value: 0.3, description: 'Mer fokuserad och faktisk' },
-  { label: 'Balanced', value: 0.7, description: 'Balanserat' },
+  { label: 'Balanced', value: DEFAULT_TEMPERATURE, description: 'Balanserat' },
   { label: 'Creative', value: 1.2, description: 'Mer kreativ och extremare' }
 ]
 
@@ -35,8 +37,8 @@ export function TemperatureControl({ temperature, onChange }: TemperatureControl
 
       <input
         type="range"
-        min="0"
-        max="2"
+        min={MIN_TEMPERATURE}
+        max={MAX_TEMPERATURE}
         step="0.1"
         value={temperature}
         onChange={(e) => onChange(parseFloat(e.target.value))}

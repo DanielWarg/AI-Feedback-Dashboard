@@ -7,13 +7,15 @@ import { ConfirmModal } from '@components/ConfirmModal'
 import { useTextAnalyzer } from '@hooks/useTextAnalyzer'
 import { storageService } from '@services/storage'
 import type { AnalyzeResponse } from '@types/api'
+import { DEFAULT_TEMPERATURE } from '@constants'
 
 export default function App() {
   const [dark, setDark] = useState(false)
   const [refreshHistory, setRefreshHistory] = useState(0)
   const [result, setResult] = useState<AnalyzeResponse | null>(null)
+  const [originalText, setOriginalText] = useState<string>('')
   const [showClearConfirm, setShowClearConfirm] = useState(false)
-  const [temperature, setTemperature] = useState(0.7)
+  const [temperature, setTemperature] = useState(DEFAULT_TEMPERATURE)
   const [generatedText, setGeneratedText] = useState<string | null>(null)
   const { toasts, success, error } = useToast()
 
@@ -26,6 +28,10 @@ export default function App() {
 
   const handleTemperatureChange = (temp: number) => {
     setTemperature(temp)
+  }
+
+  const handleOriginalTextChange = (text: string) => {
+    setOriginalText(text)
   }
 
   const handleGeneratedText = (response: any) => {
@@ -71,6 +77,7 @@ export default function App() {
                 <h2 className="text-lg font-semibold mb-4">Analysera din text</h2>
                 <TextAnalyzer 
                   onResultReceived={handleResultsReceived}
+                  onOriginalTextChange={handleOriginalTextChange}
                   onTemperatureChange={handleTemperatureChange}
                 />
               </section>
@@ -78,7 +85,8 @@ export default function App() {
               {result && (
                 <section>
                   <ResultsCard 
-                    result={result} 
+                    result={result}
+                    originalText={originalText}
                     temperature={temperature}
                     onGeneratedText={handleGeneratedText}
                   />

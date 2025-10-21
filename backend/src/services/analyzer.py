@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 
 import httpx
 from pydantic import ValidationError
+from fastapi import HTTPException
 
 from ..models.llm import LLMAnalyzeOutput, Tone
 from ..utils.config import settings
@@ -13,6 +15,11 @@ MAX_RETRIES = 3
 SERVER_ERROR_CODE = 500
 MIN_SUGGESTIONS = 2
 MAX_SUGGESTIONS = 3
+WORD_COUNT_MARGIN = 50  # Allow ±50 words deviation from original
+MIN_WORD_COUNT = 50      # Minimum word count for valid text
+RETRY_BACKOFF_BASE = 0.5  # Exponential backoff: 0.5s, 1s, 2s
+API_TIMEOUT_SECONDS = 60.0
+CONNECT_TIMEOUT_SECONDS = 10.0
 
 
 class DeepSeekAnalyzer:
@@ -23,8 +30,8 @@ class DeepSeekAnalyzer:
 
     def _build_prompt(self, text: str) -> str:
         word_count = len(text.split())
-        min_words = max(word_count - 50, 50)
-        max_words = word_count + 50
+        min_words = max(word_count - WORD_COUNT_MARGIN, MIN_WORD_COUNT)
+        max_words = word_count + WORD_COUNT_MARGIN
         
         return (
             "Du är en professionell språkexpert som specialiserar dig på att ge konstruktiv feedback på skrivna texter. "
@@ -72,7 +79,7 @@ class DeepSeekAnalyzer:
         attempt = 0
         while attempt < MAX_RETRIES:
             try:
-                async with httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=10.0)) as client:
+                async with httpx.AsyncClient(timeout=httpx.Timeout(API_TIMEOUT_SECONDS, connect=CONNECT_TIMEOUT_SECONDS)) as client:
                     resp = await client.post(self.base_url, json=payload, headers=headers)
                     if resp.status_code >= SERVER_ERROR_CODE:
                         raise httpx.HTTPStatusError(
@@ -98,20 +105,16 @@ class DeepSeekAnalyzer:
                 suggestions = suggestions[:MAX_SUGGESTIONS]
                 return suggestions, parsed.tone, parsed.alternative_text
             except (httpx.TimeoutException, httpx.HTTPStatusError):
-                await asyncio.sleep(0.5 * (2**attempt))
+                await asyncio.sleep(RETRY_BACKOFF_BASE * (2**attempt))
                 attempt += 1
             except ValidationError as e:
                 # Log error men försök återhämta sig
-                import logging
                 logging.error(f"JSON validation failed: {e}")
-                await asyncio.sleep(0.5 * (2**attempt))
+                await asyncio.sleep(RETRY_BACKOFF_BASE * (2**attempt))
                 attempt += 1
         # Efter retries
-        short_summary = (text[:150] + "...") if len(text) > 150 else text
-        return [
-            "Förkorta längre meningar",
-            "Använd mer aktiva verb",
-        ], "neutral", short_summary
+        logging.error(f"Failed to analyze text after {MAX_RETRIES} attempts")
+        raise HTTPException(status_code=503, detail="AI service unavailable - please try again later")
 
 
     async def generate_text(self, text: str, selected_suggestions: list[str], temperature: float = 0.7) -> str:
@@ -125,8 +128,8 @@ class DeepSeekAnalyzer:
             return text
         
         word_count = len(text.split())
-        min_words = max(word_count - 50, 50)
-        max_words = word_count + 50
+        min_words = max(word_count - WORD_COUNT_MARGIN, MIN_WORD_COUNT)
+        max_words = word_count + WORD_COUNT_MARGIN
         suggestions_str = "\n".join(f"- {s}" for s in selected_suggestions)
         
         prompt = (
@@ -161,7 +164,7 @@ class DeepSeekAnalyzer:
         attempt = 0
         while attempt < MAX_RETRIES:
             try:
-                async with httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=10.0)) as client:
+                async with httpx.AsyncClient(timeout=httpx.Timeout(API_TIMEOUT_SECONDS, connect=CONNECT_TIMEOUT_SECONDS)) as client:
                     resp = await client.post(self.base_url, json=payload, headers=headers)
                     if resp.status_code >= SERVER_ERROR_CODE:
                         raise httpx.HTTPStatusError(
@@ -178,18 +181,18 @@ class DeepSeekAnalyzer:
                     else:
                         # Om DeepSeek inte respekterar längd, försök igen
                         attempt += 1
-                        await asyncio.sleep(0.5 * (2**attempt))
+                        await asyncio.sleep(RETRY_BACKOFF_BASE * (2**attempt))
             except (httpx.TimeoutException, httpx.HTTPStatusError):
-                await asyncio.sleep(0.5 * (2**attempt))
+                await asyncio.sleep(RETRY_BACKOFF_BASE * (2**attempt))
                 attempt += 1
             except Exception as e:
-                import logging
                 logging.error(f"Generation error: {e}")
-                await asyncio.sleep(0.5 * (2**attempt))
+                await asyncio.sleep(RETRY_BACKOFF_BASE * (2**attempt))
                 attempt += 1
 
         # Fallback: returnera original om allt misslyckas
-        return text
+        logging.error(f"Failed to generate text after {MAX_RETRIES} attempts")
+        raise HTTPException(status_code=503, detail="Generation service unavailable")
 
 
 def get_analyzer() -> DeepSeekAnalyzer:
