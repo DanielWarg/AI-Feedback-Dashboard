@@ -38,7 +38,7 @@ async def generate(req: GenerateRequest, request: Request) -> GenerateResponse:
         raise HTTPException(status_code=400, detail="Text may not be empty")
 
     # Filtrera valda förslag
-    selected = [s for s, selected in zip(req.suggestions, req.selected_suggestions) if selected]
+    selected = [s for s, selected in zip(req.suggestions, req.selected_suggestions, strict=True) if selected]
     if not selected:
         logger.warning("No suggestions selected", extra={"correlation_id": cid})
         raise HTTPException(status_code=400, detail="At least one suggestion must be selected")

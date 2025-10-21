@@ -4,8 +4,8 @@ import asyncio
 import logging
 
 import httpx
-from pydantic import ValidationError
 from fastapi import HTTPException
+from pydantic import ValidationError
 
 from ..models.llm import LLMAnalyzeOutput, Tone
 from ..utils.config import settings
@@ -20,6 +20,7 @@ MIN_WORD_COUNT = 50      # Minimum word count for valid text
 RETRY_BACKOFF_BASE = 0.5  # Exponential backoff: 0.5s, 1s, 2s
 API_TIMEOUT_SECONDS = 60.0
 CONNECT_TIMEOUT_SECONDS = 10.0
+PREVIEW_LENGTH = 150     # Preview length for fallback text
 
 
 class DeepSeekAnalyzer:
@@ -91,7 +92,7 @@ class DeepSeekAnalyzer:
                 start = content.find("{")
                 end = content.rfind("}")
                 if start == -1 or end == -1 or end <= start:
-                    short_summary = (text[:150] + "...") if len(text) > 150 else text
+                    short_summary = (text[:PREVIEW_LENGTH] + "...") if len(text) > PREVIEW_LENGTH else text
                     return [
                         "Förkorta längre meningar",
                         "Använd mer aktiva verb",
