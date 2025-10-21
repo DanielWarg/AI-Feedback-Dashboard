@@ -1,14 +1,14 @@
 # AI Feedback Dashboard
 
-[![CI](https://github.com/YOUR_USERNAME/ai-feedback-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/ai-feedback-dashboard/actions)
+[![CI](https://github.com/DanielWarg/ai-feedback-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/DanielWarg/ai-feedback-dashboard/actions)
 
 En fullstack-applikation som analyserar text med AI och ger förbättringsförslag och tonanalys. Resultat kan sparas lokalt i webbläsaren.
 
 ## Repository
 
-- **GitHub**: [ai-feedback-dashboard](https://github.com/YOUR_USERNAME/ai-feedback-dashboard)
+- **GitHub**: [ai-feedback-dashboard](https://github.com/DanielWarg/ai-feedback-dashboard)
 - **Branch**: `main`
-- **Latest Commit**: See [commits](https://github.com/YOUR_USERNAME/ai-feedback-dashboard/commits/main)
+- **Latest Commit**: See [commits](https://github.com/DanielWarg/ai-feedback-dashboard/commits/main)
 
 ## Snabbstart (2 terminaler)
 
